@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Login from "./pages/login";
 import Dashboard from "./pages/Dashboard";
-import GovernmentDashboard from "./pages/Governmentdashboard";
+import GovernmentDashboard from "./pages/GovernmentDashboard";
 import Register from "./pages/Register";
 import AssignedChallenges from "./pages/AssignedChallenges";
 
