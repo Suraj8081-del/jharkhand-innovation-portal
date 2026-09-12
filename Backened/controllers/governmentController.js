@@ -1,4 +1,6 @@
 const Proposal = require("../models/Proposal");
+const Challenge = require("../models/Challenge");
+const User = require("../models/User");
 
 // ----------------------------------------------------
 // Get all proposals for Government review
@@ -126,7 +128,134 @@ const reviewProposal = async (req, res) => {
   }
 };
 
+
+
+
+// ----------------------------------------------------
+// NEW 1: Government KPI & Stats
+// GET /api/government/stats
+// ----------------------------------------------------
+const getGovStats = async (req, res) => {
+  try {
+    const [totalChallenges, pendingReview, assignedChallenges, pendingProposals] = await Promise.all([
+      Challenge.countDocuments(),
+      Challenge.countDocuments({ status: { $in: ["pending", "submitted"] } }),
+      Challenge.countDocuments({ status: "assigned" }),
+      Proposal.countDocuments({ status: "submitted" })
+    ]);
+
+    res.status(200).json({
+      success: true,
+      summary: {
+        totalChallenges,
+        pendingReview,
+        assignedChallenges,
+        pendingProposals
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Stats fetch failed", error: error.message });
+  }
+};
+
+// ----------------------------------------------------
+// NEW 2: All Challenges for Government Scrutiny
+// GET /api/government/challenges
+// ----------------------------------------------------
+const getAllGovChallenges = async (req, res) => {
+  try {
+    const { status } = req.query;
+    const query = status ? { status } : {};
+
+    const challenges = await Challenge.find(query)
+      .populate("submittedBy", "name email district phone")
+      .populate("assignedUniversity", "name institutionName email")
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      count: challenges.length,
+      challenges,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Challenges fetch failed", error: error.message });
+  }
+};
+
+// ----------------------------------------------------
+// NEW 3: Assign Challenge to University
+// PATCH /api/government/challenges/:id/assign
+// ----------------------------------------------------
+const assignChallengeToUniv = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { universityId, priority } = req.body;
+
+    if (!universityId) {
+      return res.status(400).json({ success: false, message: "University ID is required" });
+    }
+
+    const challenge = await Challenge.findByIdAndUpdate(
+      id,
+      {
+        assignedUniversity: universityId,
+        priority: priority || "High",
+        status: "assigned",
+        assignedAt: new Date(),
+      },
+      { new: true }
+    ).populate("assignedUniversity", "name institutionName");
+
+    if (!challenge) {
+      return res.status(404).json({ success: false, message: "Challenge not found" });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Challenge allotted to university successfully",
+      challenge,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Assignment failed", error: error.message });
+  }
+};
+
+// ----------------------------------------------------
+// NEW 4: Registered Universities list for allotment dropdown
+// GET /api/government/universities
+// ----------------------------------------------------
+const getUniversitiesList = async (req, res) => {
+  try {
+    const list = await User.find({ role: "university" })
+      .select("_id name institutionName email district");
+
+    res.status(200).json({
+      success: true,
+      count: list.length,
+      universities: list,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Universities list fetch failed", error: error.message });
+  }
+};
+
 module.exports = {
   getAllProposalsForReview,
   reviewProposal,
+  getGovStats,
+  getAllGovChallenges,
+  assignChallengeToUniv,
+  getUniversitiesList,
+};
+
+
+
+
+module.exports = {
+  getAllProposalsForReview,
+  reviewProposal,
+  getGovStats,
+  getAllGovChallenges,
+  assignChallengeToUniv,
+  getUniversitiesList,
 };

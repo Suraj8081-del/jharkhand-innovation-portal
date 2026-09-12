@@ -4,6 +4,10 @@ const router = express.Router();
 const {
   getAllProposalsForReview,
   reviewProposal,
+  getGovStats,           // Naya
+  getAllGovChallenges,   // Naya
+  assignChallengeToUniv, // Naya
+  getUniversitiesList,   // Naya
 } = require("../controllers/governmentController");
 
 // Agar allowRoles roleMiddleware.js me hai toh ye rakho:
@@ -20,5 +24,10 @@ router.patch(
   allowRoles("government"),
   reviewProposal
 );
+
+router.get("/stats", protect, allowRoles("government"), getGovStats);
+router.get("/challenges", protect, allowRoles("government"), getAllGovChallenges);
+router.patch("/challenges/:id/assign", protect, allowRoles("government"), assignChallengeToUniv);
+router.get("/universities", protect, allowRoles("government"), getUniversitiesList);
 
 module.exports = router;

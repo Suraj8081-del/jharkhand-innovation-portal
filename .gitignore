@@ -1,0 +1,21 @@
+# Environment files (NEVER PUSH TO GITHUB)
+.env
+.env.*
+*.env
+**/.env
+**/.env.*
+
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Build files
+dist/
+**/dist/
+build/
+**/build/
+
+# Logs & OS cache
+*.log
+.DS_Store
+.vscode/
